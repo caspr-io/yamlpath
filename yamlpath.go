@@ -5,6 +5,8 @@ import (
 	"regexp"
 	"strconv"
 	"strings"
+
+	"github.com/caspr-io/yamlpath/parts"
 )
 
 const (
@@ -23,7 +25,10 @@ var regexps map[string]*regexp.Regexp = map[string]*regexp.Regexp{ //nolint:goch
 
 // YamlPath traverses the yaml document to and returns the retrieved value
 func YamlPath(yaml map[string]interface{}, path string) (interface{}, error) {
-	splitPath := parsePath(path)
+	splitPath, err := parts.ParsePath(path)
+	if err != nil {
+		return nil, PathError(path, err)
+	}
 	// fmt.Printf("%v, %d", splitPath, len(splitPath))
 
 	var value interface{} = yaml
@@ -110,47 +115,4 @@ func navigateMap(m map[string]interface{}, part string) (interface{}, error) {
 	default:
 		return nil, fmt.Errorf("no support for part '%s'", part)
 	}
-}
-
-func parsePath(path string) []string {
-	parts := []string{}
-	current := []rune{}
-	i := 0
-	var r rune
-	for i < len(path) {
-		r = rune(path[i])
-		switch r {
-		case '.':
-			parts = append(parts, string(current))
-			current = []rune{}
-		case '/':
-			if len(current) > 0 {
-				parts = append(parts, string(current))
-			}
-
-			current = []rune{}
-		case '[':
-			if len(current) > 0 {
-				parts = append(parts, string(current))
-				current = []rune{}
-			}
-			for i < len(path) {
-				current = append(current, r)
-				if path[i] == ']' {
-					break
-				}
-				i++
-				r = rune(path[i])
-			}
-		default:
-			current = append(current, r)
-		}
-		i++
-	}
-
-	if len(current) > 0 {
-		parts = append(parts, string(current))
-	}
-
-	return parts
 }
