@@ -70,7 +70,11 @@ func navigateArray(l []interface{}, part string) (interface{}, error) {
 			return nil, err
 		}
 
-		return l[i], nil
+		if i < len(l) {
+			return l[i], nil
+		}
+
+		return nil, fmt.Errorf("out of bounds '%d' for array of length '%d'", i, len(l))
 	case regexps[SlicePart].MatchString(part):
 		idxs := strings.Split(part[1:len(part)-1], ":")
 
@@ -86,6 +90,14 @@ func navigateArray(l []interface{}, part string) (interface{}, error) {
 
 		if start > end {
 			return nil, fmt.Errorf("cannot take slice with reversed indexes '%s'", part)
+		}
+
+		if start >= len(l) {
+			return nil, fmt.Errorf("start slice index out of bounds '%d' for array length '%d'", start, len(l))
+		}
+
+		if end >= len(l) {
+			return nil, fmt.Errorf("end slice index out of bounds '%d' for array length '%d'", end, len(l))
 		}
 
 		slice := []interface{}{}
@@ -153,7 +165,11 @@ func valueMatches(s string, find string, operator byte) bool {
 func navigateMap(m map[string]interface{}, part string) (interface{}, error) {
 	switch {
 	case regexps[KeyPart].MatchString(part):
-		return m[part], nil
+		if v, ok := m[part]; ok {
+			return v, nil
+		}
+
+		return nil, fmt.Errorf("could not find key '%s' in yaml", part)
 	case regexps[KeySearchPart].MatchString(part):
 		key := part[3 : len(part)-1]
 		return m[key], nil

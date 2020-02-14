@@ -56,6 +56,8 @@ var tests = []struct { //nolint:gochecknoglobals
 	// Unsupported as anchors are erased in parsed yaml
 	// {"AnchoredIndex", "aliases[&first_anchor]", "Simple string value"},
 	// {"SlashAnchoredIndex", "/aliases[&first_anchor]", "Simple string value"},
+	{"ErrorOnNonExistingKey", "/broken", nil},
+	{"ErrorOnNonExistingArrayIndex", "aliases[4]", nil},
 }
 
 func TestYamlPath(t *testing.T) {
@@ -67,8 +69,12 @@ func TestYamlPath(t *testing.T) {
 			yamlMap := map[string]interface{}{}
 			assert.NilError(t, yaml.Unmarshal(yamlBytes, &yamlMap))
 			out, err := YamlPath(yamlMap, path)
-			assert.NilError(t, err)
-			assert.DeepEqual(t, out, expected)
+			if expected != nil {
+				assert.NilError(t, err)
+				assert.DeepEqual(t, out, expected)
+			} else {
+				assert.Assert(t, err != nil)
+			}
 		})
 	}
 }
