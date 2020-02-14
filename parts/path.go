@@ -30,10 +30,23 @@ func parsePath(path string, separator rune) ([]string, error) {
 
 			currentSegment = []rune{}
 		case '\\':
-			currentSegment = append(currentSegment, r)
 			i++
 			r = rune(path[i])
 			currentSegment = append(currentSegment, r)
+		case '"', '\'':
+			if err := addPart(currentSegment, &parts); err != nil {
+				return nil, err
+			}
+
+			currentSegment = []rune{}
+
+			p, endIdx, err := parsePathUntil(path, i+1, r, false) //nolint:gomnd
+			if err != nil {
+				return nil, err
+			}
+
+			parts = append(parts, p)
+			i = endIdx
 		case '[':
 			if err := addPart(currentSegment, &parts); err != nil {
 				return nil, err
@@ -41,7 +54,7 @@ func parsePath(path string, separator rune) ([]string, error) {
 
 			currentSegment = []rune{}
 
-			p, endIdx, err := parsePathUntil(path, i, ']')
+			p, endIdx, err := parsePathUntil(path, i, ']', true)
 			if err != nil {
 				return nil, err
 			}
@@ -64,6 +77,10 @@ func parsePath(path string, separator rune) ([]string, error) {
 }
 
 func addPart(part []rune, parts *[]string) error {
+	if len(part) == 0 {
+		return nil
+	}
+
 	p, err := DetectPart(string(part))
 	if err != nil {
 		return err
@@ -79,7 +96,7 @@ func DetectPart(s string) (string, error) {
 	return s, nil
 }
 
-func parsePathUntil(path string, idx int, stopOn rune) (string, int, error) {
+func parsePathUntil(path string, idx int, stopOn rune, inclusive bool) (string, int, error) {
 	part := []rune{}
 	i := idx
 
@@ -87,8 +104,10 @@ func parsePathUntil(path string, idx int, stopOn rune) (string, int, error) {
 		r := rune(path[i])
 		part = append(part, r)
 
-		if r == stopOn {
+		if r == stopOn && inclusive {
 			return string(part), i + 1, nil
+		} else if r == stopOn {
+			return string(part[0 : len(part)-1]), i + 1, nil
 		}
 		i++
 	}

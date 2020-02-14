@@ -7,10 +7,13 @@ import (
 	"gotest.tools/v3/assert"
 )
 
+//nolint:gochecknoglobals
 var yamlDoc = `---
 hash:
   child_attr:
     key: 5280
+  dotted.child:
+    key: 42
 aliases:
   - &first_anchor Simple string value
   - Complex ending
@@ -33,16 +36,23 @@ var tests = []struct { //nolint:gochecknoglobals
 }{
 	{"DotNotation", "hash.child_attr.key", 5280},
 	{"SlashNotation", "/hash/child_attr/key", 5280},
+	{"EscapedDotNotation", "hash.dotted\\.child.key", 42},
+	{"QuotedDotNotation", "hash.\"dotted.child\".key", 42},
+	{"SingleQuotedDotNotation", "hash.'dotted.child'.key", 42},
+	{"SlashDotted", "/hash/dotted.child/key", 42},
 	{"SearchChildKeyDot", "hash.child_attr[.=key]", 5280},
 	{"SearchChildKeySlash", "/hash/child_attr[.=key]", 5280},
 	{"ExplicitIndex", "aliases[0]", "Simple string value"},
 	{"ImplicitIndex", "aliases.0", "Simple string value"},
+	{"ArraySlice", "aliases[0:2]", []interface{}{"Simple string value", "Complex ending"}},
 	{"ValuePrefix", "aliases[.^Simple]", "Simple string value"},
 	{"ValueContains", "aliases[.%string]", "Simple string value"},
 	{"ValueSuffix", "aliases[.$value]", "Simple string value"},
 	{"ValueRegex", "aliases[.=~/^(\\b[Ss][a-z]+\\s){2}[a-z]+$/]", "Simple string value"},
 	{"SlashExplicitIndex", "/aliases[0]", "Simple string value"},
 	{"SlashImplicitIndex", "/aliases/0", "Simple string value"},
+	{"GetArrayOfHashes", "/users/name", []interface{}{"User One", "User Two"}},
+	{"IndexIntoArrayOfHashes", "/users[1]/name", "User Two"},
 	// Unsupported as anchors are erased in parsed yaml
 	// {"AnchoredIndex", "aliases[&first_anchor]", "Simple string value"},
 	// {"SlashAnchoredIndex", "/aliases[&first_anchor]", "Simple string value"},
@@ -58,7 +68,7 @@ func TestYamlPath(t *testing.T) {
 			assert.NilError(t, yaml.Unmarshal(yamlBytes, &yamlMap))
 			out, err := YamlPath(yamlMap, path)
 			assert.NilError(t, err)
-			assert.Equal(t, out, expected)
+			assert.DeepEqual(t, out, expected)
 		})
 	}
 }
