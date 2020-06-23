@@ -7,7 +7,7 @@ include ${ROOTPROJECT}/include.mk
 
 up:
 down:
-
+build: test
 # Test code
 .PHONY: test
 
