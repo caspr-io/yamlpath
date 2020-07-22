@@ -27,6 +27,8 @@ users:
     roles:
       - Power Users
       - Editors
+:f:oo::
+  bar: baz
 `
 
 var tests = []struct { //nolint:gochecknoglobals
@@ -35,6 +37,7 @@ var tests = []struct { //nolint:gochecknoglobals
 	output   interface{}
 }{
 	{"DotNotation", "hash.child_attr.key", 5280},
+	{"DotNotation", ":f:oo:.bar", "baz"},
 	{"SlashNotation", "/hash/child_attr/key", 5280},
 	{"EscapedDotNotation", "hash.dotted\\.child.key", 42},
 	{"QuotedDotNotation", "hash.\"dotted.child\".key", 42},

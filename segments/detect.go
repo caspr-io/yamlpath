@@ -6,7 +6,7 @@ import (
 )
 
 const (
-	KeySegment = "^[a-zA-Z0-9_\\.-]+$"
+	KeySegment = "^[:a-zA-Z0-9_\\.-]+$"
 	// KeySearchSegment     = "^\\[\\.=[a-zA-Z][a-zA-Z0-9_-]*\\]$"
 	ExplicitIndexSegment = "^\\[[0-9]+\\]$"
 	ImplicitIndexSegment = "^[0-9]+$"
